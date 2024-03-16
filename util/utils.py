@@ -209,7 +209,7 @@ def plot_ordered_ica_kurtosis(X, ica, dataset_name="Digits"):
 
 
 from sklearn_extra.cluster import KMedoids
-from sklearn.metrics import silhouette_score
+from sklearn.metrics import silhouette_score, davies_bouldin_score, calinski_harabasz_score
 
 
 def k_medoid_multi_seed(X, k_min, k_max, metric="euclidean"):
@@ -218,17 +218,27 @@ def k_medoid_multi_seed(X, k_min, k_max, metric="euclidean"):
     kmedoids_train_sil_std = []
     kmedoids_train_wcss_mean = []
     kmedoids_train_wcss_std = []
+    kmedoids_train_db_mean = []
+    kmedoids_train_db_std = []
+    kmedoids_train_ch_mean = []
+    kmedoids_train_ch_std = []
 
     # Loop over different numbers of clusters
     for i in tqdm(range(k_min, k_max)):
         silhouette_scores = []
         inertia_scores = []
+        bd_scores = []
+        ch_scores = []
         for seed in RANDOM_SEEDS:
             # Initialize KMedoids with a specific random seed
-            kmedoids = KMedoids(n_clusters=i, init='k-medoids++', max_iter=500, random_state=seed, metric=metric)
+            kmedoids = KMedoids(n_clusters=i, init='k-medoids++', max_iter=1000, random_state=seed, metric=metric)
             kmedoids.fit(X)
             # Compute silhouette score for this seed
             silhouette_scores.append(silhouette_score(X, kmedoids.labels_))
+            # Compute Davies-Bouldin score for this seed
+            bd_scores.append(davies_bouldin_score(X, kmedoids.labels_))
+            # Compute Calinski-Harabasz score for this seed
+            ch_scores.append(calinski_harabasz_score(X, kmedoids.labels_))
             # Compute inertia for this seed
             inertia_scores.append(kmedoids.inertia_)
         # Calculate mean and standard deviation of silhouette scores for this number of clusters
@@ -241,15 +251,29 @@ def k_medoid_multi_seed(X, k_min, k_max, metric="euclidean"):
         std_inertia = np.std(inertia_scores)
         kmedoids_train_wcss_mean.append(mean_inertia)
         kmedoids_train_wcss_std.append(std_inertia)
+        # Calculate mean and standard deviation of Davies-Bouldin scores for this number of clusters
+        mean_bd = np.mean(bd_scores)
+        std_bd = np.std(bd_scores)
+        kmedoids_train_db_mean.append(mean_bd)
+        kmedoids_train_db_std.append(std_bd)
+        # Calculate mean and standard deviation of Calinski-Harabasz scores for this number of clusters
+        mean_ch = np.mean(ch_scores)
+        std_ch = np.std(ch_scores)
+        kmedoids_train_ch_mean.append(mean_ch)
+        kmedoids_train_ch_std.append(std_ch)
 
     # Convert lists to numpy arrays for easy plotting
     kmedoids_train_sil_mean = np.array(kmedoids_train_sil_mean)
     kmedoids_train_sil_std = np.array(kmedoids_train_sil_std)
     kmedoids_train_wcss_mean = np.array(kmedoids_train_wcss_mean)
     kmedoids_train_wcss_std = np.array(kmedoids_train_wcss_std)
+    kmedoids_train_db_mean = np.array(kmedoids_train_db_mean)
+    kmedoids_train_db_std = np.array(kmedoids_train_db_std)
+    kmedoids_train_ch_mean = np.array(kmedoids_train_ch_mean)
+    kmedoids_train_ch_std = np.array(kmedoids_train_ch_std)
 
 
-    return kmedoids_train_sil_mean, kmedoids_train_sil_std, kmedoids_train_wcss_mean, kmedoids_train_wcss_std
+    return kmedoids_train_sil_mean, kmedoids_train_sil_std, kmedoids_train_wcss_mean, kmedoids_train_wcss_std, kmedoids_train_db_mean, kmedoids_train_db_std, kmedoids_train_ch_mean, kmedoids_train_ch_std
 
 
 def plot_k_medoid_multi_seed(k_min, k_max, metric, kmedoids_train_sil_mean, kmedoids_train_sil_std, kmedoids_train_wcss_mean, kmedoids_train_wcss_std):

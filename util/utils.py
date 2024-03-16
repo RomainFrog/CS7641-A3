@@ -5,6 +5,7 @@ from sklearn.model_selection import GridSearchCV
 from sklearn.metrics import precision_score, recall_score, f1_score, roc_auc_score
 
 RANDOM_SEED = 42
+RANDOM_SEEDS = [42, 43, 44, 45, 46]
 
 
 def learning_curve_with_cross_validation(estimator, X, y, train_sizes, cv=5, scoring=None, dataset_name=None):
@@ -206,4 +207,147 @@ def plot_ordered_ica_kurtosis(X, ica, dataset_name="Digits"):
 
 
 
-def 
+
+from sklearn_extra.cluster import KMedoids
+from sklearn.metrics import silhouette_score
+
+
+def k_medoid_multi_seed(X, k_min, k_max, metric="euclidean"):
+    # Initialize lists to store results
+    kmedoids_train_sil_mean = []
+    kmedoids_train_sil_std = []
+    kmedoids_train_wcss_mean = []
+    kmedoids_train_wcss_std = []
+
+    # Loop over different numbers of clusters
+    for i in tqdm(range(k_min, k_max)):
+        silhouette_scores = []
+        inertia_scores = []
+        for seed in RANDOM_SEEDS:
+            # Initialize KMedoids with a specific random seed
+            kmedoids = KMedoids(n_clusters=i, init='k-medoids++', max_iter=500, random_state=seed, metric=metric)
+            kmedoids.fit(X)
+            # Compute silhouette score for this seed
+            silhouette_scores.append(silhouette_score(X, kmedoids.labels_))
+            # Compute inertia for this seed
+            inertia_scores.append(kmedoids.inertia_)
+        # Calculate mean and standard deviation of silhouette scores for this number of clusters
+        mean_silhouette_score = np.mean(silhouette_scores)
+        std_silhouette_score = np.std(silhouette_scores)
+        kmedoids_train_sil_mean.append(mean_silhouette_score)
+        kmedoids_train_sil_std.append(std_silhouette_score)
+        # Calculate mean and standard deviation of inertia scores for this number of clusters
+        mean_inertia = np.mean(inertia_scores)
+        std_inertia = np.std(inertia_scores)
+        kmedoids_train_wcss_mean.append(mean_inertia)
+        kmedoids_train_wcss_std.append(std_inertia)
+
+    # Convert lists to numpy arrays for easy plotting
+    kmedoids_train_sil_mean = np.array(kmedoids_train_sil_mean)
+    kmedoids_train_sil_std = np.array(kmedoids_train_sil_std)
+    kmedoids_train_wcss_mean = np.array(kmedoids_train_wcss_mean)
+    kmedoids_train_wcss_std = np.array(kmedoids_train_wcss_std)
+
+
+    return kmedoids_train_sil_mean, kmedoids_train_sil_std, kmedoids_train_wcss_mean, kmedoids_train_wcss_std
+
+
+def plot_k_medoid_multi_seed(k_min, k_max, metric, kmedoids_train_sil_mean, kmedoids_train_sil_std, kmedoids_train_wcss_mean, kmedoids_train_wcss_std):
+
+    # increase font size
+    plt.rcParams.update({'font.size': 18})
+    fig, ax1 = plt.subplots(figsize=(10, 5))
+    color = 'tab:blue'
+    ax1.set_xlabel('Number of clusters')
+    ax1.set_ylabel('Silhouette Score', color=color)
+    ax1.plot(range(k_min, k_max), kmedoids_train_sil_mean, marker='o', color=color)
+    ax1.fill_between(range(k_min, k_max), kmedoids_train_sil_mean - kmedoids_train_sil_std, kmedoids_train_sil_mean + kmedoids_train_sil_std, alpha=0.3, color=color)
+    # add vertical line for best silhouette score
+    ax1.axvline(x=np.argmax(kmedoids_train_sil_mean) + k_min, color='b', linestyle='--', label='Best Silhouette Score')
+    ax1.tick_params(axis='y', labelcolor=color)
+
+    ax2 = ax1.twinx()  
+    color = 'tab:red'
+    ax2.set_ylabel('Inertia', color=color)  
+    ax2.plot(range(k_min, k_max), kmedoids_train_wcss_mean, marker='o', color=color)
+    ax2.fill_between(range(k_min, k_max), kmedoids_train_wcss_mean - kmedoids_train_wcss_std, kmedoids_train_wcss_mean + kmedoids_train_wcss_std, alpha=0.3, color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
+
+    fig.tight_layout()  
+    plt.title(f'KMedoids: Silhouette and Inertia vs number of clusters')
+    plt.grid(True)
+
+    plt.savefig(f'figures/CLUSTERING/KMedoids_search_{metric}.pdf', bbox_inches='tight')
+    plt.show()
+
+
+
+from sklearn.mixture import GaussianMixture
+def gaussian_mixture_multi_seed(X, k_min, k_max, covariance_type="full"):
+    gmm_train_sil_mean = []
+    gmm_train_sil_std = []
+    gmm_train_bic_mean = []
+    gmm_train_bic_std = []
+    gmm_train_aic_mean = []
+    gmm_train_aic_std = []
+
+    for i in tqdm(range(k_min, k_max)):
+        silhouette_scores = []
+        bic_scores = []
+        aic_scores = []
+        for seed in RANDOM_SEEDS:
+            gmm = GaussianMixture(n_components=i, covariance_type=covariance_type, random_state=seed)
+            gmm.fit(X)
+            silhouette_scores.append(silhouette_score(X, gmm.predict(X)))
+            bic_scores.append(gmm.bic(X))
+            aic_scores.append(gmm.aic(X))
+        mean_silhouette_score = np.mean(silhouette_scores)
+        std_silhouette_score = np.std(silhouette_scores)
+        gmm_train_sil_mean.append(mean_silhouette_score)
+        gmm_train_sil_std.append(std_silhouette_score)
+        mean_bic = np.mean(bic_scores)
+        std_bic = np.std(bic_scores)
+        gmm_train_bic_mean.append(mean_bic)
+        gmm_train_bic_std.append(std_bic)
+        mean_aic = np.mean(aic_scores)
+        std_aic = np.std(aic_scores)
+        gmm_train_aic_mean.append(mean_aic)
+        gmm_train_aic_std.append(std_aic)
+
+    gmm_train_sil_mean = np.array(gmm_train_sil_mean)
+    gmm_train_sil_std = np.array(gmm_train_sil_std)
+    gmm_train_bic_mean = np.array(gmm_train_bic_mean)
+    gmm_train_bic_std = np.array(gmm_train_bic_std)
+    gmm_train_aic_mean = np.array(gmm_train_aic_mean)
+    gmm_train_aic_std = np.array(gmm_train_aic_std)
+
+    return gmm_train_sil_mean, gmm_train_sil_std, gmm_train_bic_mean, gmm_train_bic_std, gmm_train_aic_mean, gmm_train_aic_std
+
+
+def plot_gmm_multi_seed(k_min, k_max, gmm_train_sil_mean, gmm_train_sil_std, gmm_train_bic_mean, gmm_train_bic_std, gmm_train_aic_mean, gmm_train_aic_std, covariance_type):
+    
+     # increase font size
+    plt.rcParams.update({'font.size': 18})
+    fig, ax1 = plt.subplots(figsize=(10, 5))
+
+    color = 'tab:blue'
+    ax1.set_xlabel('Number of clusters')
+    ax1.set_ylabel('Silhouette Score', color=color)
+    ax1.plot(range(k_min, k_max), gmm_train_sil_mean, marker='o', color=color)
+    ax1.fill_between(range(k_min, k_max), gmm_train_sil_mean - gmm_train_sil_std, gmm_train_sil_mean + gmm_train_sil_std, alpha=0.3, color=color)
+    # add vertical line for best silhouette score
+    ax1.axvline(x=np.argmax(gmm_train_sil_mean) + k_min, color='b', linestyle='--', label='Best Silhouette Score')
+    ax1.tick_params(axis='y', labelcolor=color)
+
+    ax2 = ax1.twinx()  
+    color = 'tab:red'
+    ax2.set_ylabel('Inertia', color=color)  
+    ax2.plot(range(k_min, k_max), gmm_train_bic_mean, marker='o', color=color)
+    ax2.fill_between(range(k_min, k_max), gmm_train_bic_mean - gmm_train_bic_std, gmm_train_bic_mean + gmm_train_bic_std, alpha=0.3, color=color)
+    ax2.tick_params(axis='y', labelcolor=color)
+
+    fig.tight_layout()
+    plt.title(f'GMM: Silhouette Score vs AIC and BIC ({covariance_type} covariance)')
+    plt.grid(True)
+    plt.savefig(f'figures/CLUSTERING/GMM_search_{covariance_type}.pdf', bbox_inches='tight')
+    plt.show()

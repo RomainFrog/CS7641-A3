@@ -160,6 +160,47 @@ def plot_pca_cumulative_explained_variance_ratio(X, pca, dataset_name="Digits", 
 
 
 
+def plot_pca_eigen_and_variance(X, pca, dataset_name="Digits", ratio_threshold=0.8):
+    # Fit PCA on the scaled training data
+    pca.fit(X)
+
+    # Get eigenvalues
+    eigenvalues = pca.explained_variance_
+
+    # Get the cumulative explained variance
+    cumulative_explained_variance = np.cumsum(pca.explained_variance_ratio_)
+
+    plt.figure(figsize=(10, 5))
+    plt.rcParams.update({'font.size': 16})
+    
+    # Plot eigenvalues to visualize the explained variance
+    ax1 = plt.gca()
+    ax1.bar(range(1, len(eigenvalues)+1), eigenvalues, label='Eigenvalue')
+    ax1.set_ylabel('Eigenvalue')
+    
+    # Add a second y axis for the cumulative explained variance
+    ax2 = ax1.twinx()
+    ax2.plot(range(1, len(eigenvalues)+1), cumulative_explained_variance, marker='o', linestyle='-', color='r', label='Cumulative Explained Variance')
+    ax2.set_ylabel('Cumulative Explained Variance')
+    
+    # Add a horizontal line at the threshold
+    ax2.axhline(y=ratio_threshold, color='r', linestyle='--', label=f'{ratio_threshold} threshold')
+    
+    plt.xlabel('Number of Components')
+    plt.title(f'PCA Eigenvalue and Cumulative Explained Variance')
+    
+    # Add a grid to the plot
+    plt.grid()
+    
+    # x axis ticks to be integers (one every 5)
+    plt.xticks(np.arange(0, len(eigenvalues)+1, 5))
+    
+    plt.tight_layout()
+    plt.savefig(f'figures/DR/{dataset_name}_pca_eigen_and_variance.pdf', bbox_inches='tight')
+    plt.show() 
+
+
+
 from sklearn.decomposition import FastICA
 from scipy.stats import kurtosis
 from tqdm import tqdm

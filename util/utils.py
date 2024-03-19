@@ -416,3 +416,120 @@ def plot_gmm_multi_seed(k_min, k_max, gmm_train_sil_mean, gmm_train_sil_std, gmm
     plt.grid(True)
     plt.savefig(f'figures/CLUSTERING/GMM_search_{covariance_type}.pdf', bbox_inches='tight')
     plt.show()
+
+
+from sklearn.manifold import TSNE
+def clus_viz(X, clusterer, X_tsne=None):
+
+    labels = clusterer.fit_predict(X)
+
+    if X_tsne is None:
+        tsne = TSNE(n_components=2, random_state=RANDOM_SEED)
+        X_tsne = tsne.fit_transform(X)
+
+    plt.figure(figsize=(10, 5))
+    plt.scatter(X_tsne[:, 0], X_tsne[:, 1], c = labels, cmap='jet')
+    plt.title('Clusters Visualization')
+    plt.xlabel('t-SNE 1')
+    plt.ylabel('t-SNE 2')
+    plt.grid(True)
+    plt.show()
+
+
+
+from sklearn.random_projection import GaussianRandomProjection, SparseRandomProjection
+from sklearn.metrics import mean_squared_error
+
+def gaussian_random_projection_multi_seed(X, n_comp_min, n_comp_max, proj_type="Gaussian"):
+    n_components = range(n_comp_min, n_comp_max)
+    err_mean = []
+    err_std = []
+
+    for n in tqdm(n_components):
+        proj_err = []
+        for seed in RANDOM_SEEDS:
+            if proj_type == "Gaussian":
+                grp = GaussianRandomProjection(n_components=n, random_state=seed, compute_inverse_components=True)
+            else:
+                grp = SparseRandomProjection(n_components=n, random_state=seed, compute_inverse_components=True)
+            X_projected = grp.fit_transform(X)
+            reconstruction_error = mean_squared_error(X, grp.inverse_transform(X_projected))
+            proj_err.append(reconstruction_error)
+        err_mean.append(np.mean(proj_err))
+        err_std.append(np.std(proj_err))
+    return err_mean, err_std
+
+
+def plot_RP_metrics(metrics, k_min, k_max):
+    # use a twin axis to plot the reconstruction error and pairwise distance error
+    fig, ax1 = plt.subplots(figsize=(10, 5))
+
+    color = 'tab:red'
+    ax1.set_xlabel('Number of Components')
+    ax1.set_ylabel('Reconstruction Error', color=color)
+    ax1.plot(range(k_min, k_max), metrics[0], color=color)
+    ax1.fill_between(range(k_min, k_max), np.array(metrics[0]) - np.array(metrics[1]), np.array(metrics[0]) + np.array(metrics[1]), color=color, alpha=0.3)
+    ax1.tick_params(axis='y', labelcolor=color)
+
+    fig.tight_layout()  # otherwise the right y-label is slightly clipped
+    plt.grid()
+    plt.title("Gaussian Random Projection")
+    plt.savefig("figures/CLUSTERING/DIGITS/gaussian_random_projection_metrics.pdf", format='pdf', bbox_inches='tight')
+    plt.show()
+
+
+
+from sklearn.metrics import log_loss, accuracy_score
+from sklearn.neural_network import MLPClassifier
+from sklearn.model_selection import train_test_split
+from tqdm import tqdm
+import warnings
+warnings.filterwarnings('ignore')
+
+def mlp_validation_curve(mlp_model, X,y, n_epochs=50):
+
+    # Split your training data into a smaller training set and a validation set
+    X_train_small, X_val, y_train_small, y_val = train_test_split(X, y, test_size=0.2, random_state=RANDOM_SEED)
+
+    # Initialize the MLPClassifier
+    mlp_model = MLPClassifier(random_state=RANDOM_SEED, max_iter=1, warm_start=True, hidden_layer_sizes=(100))
+
+    train_loss = []
+    val_loss = []
+    train_acc = []
+    val_acc = []
+
+    # Manually create the epochs loop
+    for _ in tqdm(range(n_epochs)):
+        mlp_model.fit(X_train_small, y_train_small)
+        
+        # Get the loss on the training set
+        train_loss.append(mlp_model.loss_)
+        
+        # Get the predictions on the validation set
+        y_val_pred = mlp_model.predict_proba(X_val)
+        
+        # Calculate the loss on the validation set
+        val_loss.append(log_loss(y_val, y_val_pred))
+
+        # Get the training accuracy
+        y_train_pred = mlp_model.predict(X_train_small)
+        train_acc.append(accuracy_score(y_train_small, y_train_pred))
+
+        # Get the validation accuracy
+        y_val_pred = mlp_model.predict(X_val)
+        val_acc.append(accuracy_score(y_val, y_val_pred))
+
+    # Plot the training and validation loss curves as well as the training and validation accuracies using subplot
+    fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+    axes[0].plot(train_loss)
+    axes[0].plot(val_loss)
+    axes[0].set_xlabel('Epochs')
+    axes[0].set_ylabel('Loss')
+    axes[0].legend(['Train', 'Validation'])
+
+    axes[1].plot(train_acc)
+    axes[1].plot(val_acc)
+    axes[1].set_xlabel('Epochs')
+    axes[1].set_ylabel('Accuracy')
+    axes[1].legend(['Train', 'Validation'])

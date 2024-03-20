@@ -205,7 +205,7 @@ from sklearn.decomposition import FastICA
 from scipy.stats import kurtosis
 from tqdm import tqdm
 
-def plot_ica_mean_kurtosis(X, n_min, n_max, dataset_name="Digits"):
+def plot_ica_mean_kurtosis(X, n_min, n_max, dataset_name="Digits", x_ticks_interval=5):
     
     mean_kurtosis = []
     n_components = range(n_min, n_max)
@@ -222,7 +222,7 @@ def plot_ica_mean_kurtosis(X, n_min, n_max, dataset_name="Digits"):
     plt.ylabel('Mean Kurtosis')
     plt.title(f'ICA Mean Kurtosis on {dataset_name} dataset')
     plt.grid()
-    plt.xticks(np.arange(0, len(n_components)+1, 5))
+    plt.xticks(np.arange(2, len(n_components)+1, x_ticks_interval))
     plt.savefig(f'figures/DR/{dataset_name}_ica_mean_kurtosis.pdf', bbox_inches='tight')
     plt.show()
 
@@ -238,7 +238,7 @@ def plot_ordered_ica_kurtosis(X, ica, dataset_name="Digits"):
 
     plt.figure(figsize=(10, 5))
     plt.rcParams.update({'font.size': 18})
-    plt.plot(range(1, len(sorted_kurts)+1), sorted_kurts, linewidth=2, marker='', linestyle='-')
+    plt.plot(range(1, len(sorted_kurts)+1), sorted_kurts, linewidth=3, marker='', linestyle='-')
     plt.xlabel('Component')
     plt.ylabel('Kurtosis')
     plt.title(f'ICA Ordered Component Kurtosis on {dataset_name} dataset')
@@ -406,13 +406,13 @@ def plot_gmm_multi_seed(k_min, k_max, gmm_train_sil_mean, gmm_train_sil_std, gmm
 
     ax2 = ax1.twinx()  
     color = 'tab:red'
-    ax2.set_ylabel('Inertia', color=color)  
+    ax2.set_ylabel('BIC', color=color)  
     ax2.plot(range(k_min, k_max), gmm_train_bic_mean, marker='o', color=color)
     ax2.fill_between(range(k_min, k_max), gmm_train_bic_mean - gmm_train_bic_std, gmm_train_bic_mean + gmm_train_bic_std, alpha=0.3, color=color)
     ax2.tick_params(axis='y', labelcolor=color)
 
     fig.tight_layout()
-    plt.title(f'GMM: Silhouette Score vs AIC and BIC ({covariance_type} covariance)')
+    plt.title(f'GMM: Silhouette Score and BIC ({covariance_type} covariance)')
     plt.grid(True)
     plt.savefig(f'figures/CLUSTERING/GMM_search_{covariance_type}.pdf', bbox_inches='tight')
     plt.show()
@@ -447,7 +447,7 @@ def gaussian_random_projection_multi_seed(X, n_comp_min, n_comp_max, proj_type="
 
     for n in tqdm(n_components):
         proj_err = []
-        for seed in RANDOM_SEEDS:
+        for seed in [42]:
             if proj_type == "Gaussian":
                 grp = GaussianRandomProjection(n_components=n, random_state=seed, compute_inverse_components=True)
             else:
@@ -533,3 +533,26 @@ def mlp_validation_curve(mlp_model, X,y, n_epochs=50):
     axes[1].set_xlabel('Epochs')
     axes[1].set_ylabel('Accuracy')
     axes[1].legend(['Train', 'Validation'])
+
+
+def plot_bar_clustering_metrics(X, labels, dataset_name="TITANIC"):
+    """
+    plot the cluster mean of each feature
+    """
+    cluster_means = X.groupby(labels).mean()
+
+    # set font size
+    plt.rcParams.update({'font.size': 14})
+
+    # Plot the cluster means
+    fig, ax = plt.subplots(figsize=(10, 4))
+    cluster_means.T.plot.bar(ax=ax)
+    plt.title('Cluster Means')
+    # add an axis for y=0
+    plt.axhline(0, color='black', linewidth=1)
+
+    # remove legend
+    plt.legend().remove()
+
+    plt.savefig(f'figures/CLUSTERING/{dataset_name}/cluster_means.pdf', bbox_inches='tight')
+    plt.show()

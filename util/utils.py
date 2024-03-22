@@ -205,7 +205,7 @@ from sklearn.decomposition import FastICA
 from scipy.stats import kurtosis
 from tqdm import tqdm
 
-def plot_ica_mean_kurtosis(X, n_min, n_max, dataset_name="Digits", x_ticks_interval=5):
+def plot_ica_mean_kurtosis(X, n_min, n_max, dataset_name="Digits", x_ticks_interval=5, x_line=16):
     
     mean_kurtosis = []
     n_components = range(n_min, n_max)
@@ -218,10 +218,11 @@ def plot_ica_mean_kurtosis(X, n_min, n_max, dataset_name="Digits", x_ticks_inter
     plt.figure(figsize=(10, 5))
     plt.rcParams.update({'font.size': 18})
     plt.plot(n_components, mean_kurtosis, marker='', linestyle='-', linewidth=2)
+    plt.axvline(x=x_line, color='r', linestyle='--', label='16 components')
     plt.xlabel('Number of Components')
     plt.ylabel('Mean Kurtosis')
     plt.title(f'ICA Mean Kurtosis on {dataset_name} dataset')
-    plt.grid()
+    # plt.grid()
     plt.xticks(np.arange(2, len(n_components)+1, x_ticks_interval))
     plt.savefig(f'figures/DR/{dataset_name}_ica_mean_kurtosis.pdf', bbox_inches='tight')
     plt.show()

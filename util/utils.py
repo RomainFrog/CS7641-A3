@@ -318,7 +318,7 @@ def k_medoid_multi_seed(X, k_min, k_max, metric="euclidean"):
     return kmedoids_train_sil_mean, kmedoids_train_sil_std, kmedoids_train_wcss_mean, kmedoids_train_wcss_std, kmedoids_train_db_mean, kmedoids_train_db_std, kmedoids_train_ch_mean, kmedoids_train_ch_std
 
 
-def plot_k_medoid_multi_seed(k_min, k_max, metric, kmedoids_train_sil_mean, kmedoids_train_sil_std, kmedoids_train_wcss_mean, kmedoids_train_wcss_std):
+def plot_k_medoid_multi_seed(k_min, k_max, metric, kmedoids_train_sil_mean, kmedoids_train_sil_std, kmedoids_train_wcss_mean, kmedoids_train_wcss_std, x_line = 3):
 
     # increase font size
     plt.rcParams.update({'font.size': 18})
@@ -329,8 +329,10 @@ def plot_k_medoid_multi_seed(k_min, k_max, metric, kmedoids_train_sil_mean, kmed
     ax1.plot(range(k_min, k_max), kmedoids_train_sil_mean, marker='o', color=color)
     ax1.fill_between(range(k_min, k_max), kmedoids_train_sil_mean - kmedoids_train_sil_std, kmedoids_train_sil_mean + kmedoids_train_sil_std, alpha=0.3, color=color)
     # add vertical line for best silhouette score
-    ax1.axvline(x=np.argmax(kmedoids_train_sil_mean) + k_min, color='b', linestyle='--', label='Best Silhouette Score')
+    ax1.axvline(x=x_line, color='b', linestyle='--', label='Best Silhouette Score')
     ax1.tick_params(axis='y', labelcolor=color)
+    ax1.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
+                         
 
     ax2 = ax1.twinx()  
     color = 'tab:red'
@@ -338,10 +340,11 @@ def plot_k_medoid_multi_seed(k_min, k_max, metric, kmedoids_train_sil_mean, kmed
     ax2.plot(range(k_min, k_max), kmedoids_train_wcss_mean, marker='o', color=color)
     ax2.fill_between(range(k_min, k_max), kmedoids_train_wcss_mean - kmedoids_train_wcss_std, kmedoids_train_wcss_mean + kmedoids_train_wcss_std, alpha=0.3, color=color)
     ax2.tick_params(axis='y', labelcolor=color)
+    ax2.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
 
     fig.tight_layout()  
     plt.title(f'KMedoids: Silhouette and Inertia vs number of clusters')
-    plt.grid(True)
+    plt.grid(False)
 
     plt.savefig(f'figures/CLUSTERING/KMedoids_search_{metric}.pdf', bbox_inches='tight')
     plt.show()
@@ -390,9 +393,10 @@ def gaussian_mixture_multi_seed(X, k_min, k_max, covariance_type="full"):
     return gmm_train_sil_mean, gmm_train_sil_std, gmm_train_bic_mean, gmm_train_bic_std, gmm_train_aic_mean, gmm_train_aic_std
 
 
-def plot_gmm_multi_seed(k_min, k_max, gmm_train_sil_mean, gmm_train_sil_std, gmm_train_bic_mean, gmm_train_bic_std, gmm_train_aic_mean, gmm_train_aic_std, covariance_type):
+def plot_gmm_multi_seed(k_min, k_max, gmm_train_sil_mean, gmm_train_sil_std, gmm_train_bic_mean, gmm_train_bic_std, gmm_train_aic_mean, gmm_train_aic_std, covariance_type, x_line=7):
     
-     # increase font size
+
+    # increase font size
     plt.rcParams.update({'font.size': 18})
     fig, ax1 = plt.subplots(figsize=(10, 5))
 
@@ -402,8 +406,9 @@ def plot_gmm_multi_seed(k_min, k_max, gmm_train_sil_mean, gmm_train_sil_std, gmm
     ax1.plot(range(k_min, k_max), gmm_train_sil_mean, marker='o', color=color)
     ax1.fill_between(range(k_min, k_max), gmm_train_sil_mean - gmm_train_sil_std, gmm_train_sil_mean + gmm_train_sil_std, alpha=0.3, color=color)
     # add vertical line for best silhouette score
-    ax1.axvline(x=np.argmax(gmm_train_sil_mean) + k_min, color='b', linestyle='--', label='Best Silhouette Score')
+    ax1.axvline(x_line, color='b', linestyle='--', label='Best Silhouette Score')
     ax1.tick_params(axis='y', labelcolor=color)
+    ax1.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
 
     ax2 = ax1.twinx()  
     color = 'tab:red'
@@ -411,10 +416,13 @@ def plot_gmm_multi_seed(k_min, k_max, gmm_train_sil_mean, gmm_train_sil_std, gmm
     ax2.plot(range(k_min, k_max), gmm_train_bic_mean, marker='o', color=color)
     ax2.fill_between(range(k_min, k_max), gmm_train_bic_mean - gmm_train_bic_std, gmm_train_bic_mean + gmm_train_bic_std, alpha=0.3, color=color)
     ax2.tick_params(axis='y', labelcolor=color)
+    ax2.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
+
+
 
     fig.tight_layout()
     plt.title(f'GMM: Silhouette Score and BIC ({covariance_type} covariance)')
-    plt.grid(True)
+    plt.grid(False)
     plt.savefig(f'figures/CLUSTERING/GMM_search_{covariance_type}.pdf', bbox_inches='tight')
     plt.show()
 
@@ -480,7 +488,7 @@ def plot_RP_metrics(metrics, k_min, k_max):
 
 
 
-from sklearn.metrics import log_loss, accuracy_score
+from sklearn.metrics import log_loss, accuracy_score, f1_score
 from sklearn.neural_network import MLPClassifier
 from sklearn.model_selection import train_test_split
 from tqdm import tqdm
@@ -492,8 +500,9 @@ def mlp_validation_curve(mlp_model, X,y, n_epochs=50):
     # Split your training data into a smaller training set and a validation set
     X_train_small, X_val, y_train_small, y_val = train_test_split(X, y, test_size=0.2, random_state=RANDOM_SEED)
 
-    # Initialize the MLPClassifier
-    mlp_model = MLPClassifier(random_state=RANDOM_SEED, max_iter=1, warm_start=True, hidden_layer_sizes=(100))
+    # make sure mlp model is well setup
+    mlp_model.warm_start = True
+    mlp_model.max_iter = 1
 
     train_loss = []
     val_loss = []
@@ -515,14 +524,16 @@ def mlp_validation_curve(mlp_model, X,y, n_epochs=50):
 
         # Get the training accuracy
         y_train_pred = mlp_model.predict(X_train_small)
-        train_acc.append(accuracy_score(y_train_small, y_train_pred))
+        # train_acc.append(accuracy_score(y_train_small, y_train_pred))
+        train_acc.append(f1_score(y_train_small, y_train_pred, average='weighted'))
 
         # Get the validation accuracy
         y_val_pred = mlp_model.predict(X_val)
-        val_acc.append(accuracy_score(y_val, y_val_pred))
+        # val_acc.append(accuracy_score(y_val, y_val_pred))
+        val_acc.append(f1_score(y_val, y_val_pred, average='weighted'))
 
     # Plot the training and validation loss curves as well as the training and validation accuracies using subplot
-    fig, axes = plt.subplots(1, 2, figsize=(15, 5))
+    fig, axes = plt.subplots(1, 2, figsize=(15, 4))
     axes[0].plot(train_loss)
     axes[0].plot(val_loss)
     axes[0].set_xlabel('Epochs')
@@ -532,11 +543,19 @@ def mlp_validation_curve(mlp_model, X,y, n_epochs=50):
     axes[1].plot(train_acc)
     axes[1].plot(val_acc)
     axes[1].set_xlabel('Epochs')
-    axes[1].set_ylabel('Accuracy')
+    axes[1].set_ylabel('F1 Score')
     axes[1].legend(['Train', 'Validation'])
 
+    print(f'Final training loss: {train_loss[-1]}')
+    print(f'Final validation loss: {val_loss[-1]}')
+    print(f'Final training F1: {train_acc[-1]}')
+    print(f'Final validation F1: {val_acc[-1]}')
 
-def plot_bar_clustering_metrics(X, labels, dataset_name="TITANIC"):
+    plt.savefig('figures/MLP_validation_curve.pdf', bbox_inches='tight', format='pdf')
+
+
+
+def plot_bar_clustering_metrics_2(X, labels, dataset_name="TITANIC"):
     """
     plot the cluster mean of each feature
     """
@@ -555,5 +574,46 @@ def plot_bar_clustering_metrics(X, labels, dataset_name="TITANIC"):
     # remove legend
     plt.legend().remove()
 
+    plt.savefig(f'figures/CLUSTERING/{dataset_name}/cluster_means.pdf', bbox_inches='tight')
+    plt.show()
+
+
+import seaborn as sns
+def plot_bar_clustering_metrics(X, labels, dataset_name="TITANIC"):
+    """
+    Plot the cluster mean of each feature.
+    """
+    cluster_means = X.groupby(labels).mean()
+
+    # drop alone, adult, Cherbourg, Queenstown, Southampton
+    cluster_means = cluster_means.drop(columns=['alone', 'adult', 'Cherbourg', 'Queenstown', 'Southampton'])
+
+    # rescale each feature to be between -1 and 1
+    # cluster_means = (cluster_means - cluster_means.min()) / (cluster_means.max() - cluster_means.min())
+
+    # Set Seaborn styling
+    sns.set_style("whitegrid")
+
+    # Plot the cluster means
+    fig, ax = plt.subplots(figsize=(8, 4))  # Reduce figure size
+    cluster_means.T.plot.bar(ax=ax, width=0.8, edgecolor='black')  # Plot the cluster means
+    ax.set_ylabel('Mean')  # Label for y-axis
+    # ax.set_xlabel('Features')  # Label for x-axis
+    # label for x-axis on the top
+    ax.xaxis.set_label_position('top')
+    ax.xaxis.tick_top()
+    ax.set_xlabel('Features', labelpad=10)
+
+    # can we make bars wider?
+    # ax.bar(cluster_means.columns, cluster_means.values, width=0.5)
+
+
+    # Remove legend
+    ax.legend().remove()
+
+    # remove grid
+    ax.grid(False)
+
+    plt.tight_layout()  # Adjust layout for better appearance
     plt.savefig(f'figures/CLUSTERING/{dataset_name}/cluster_means.pdf', bbox_inches='tight')
     plt.show()

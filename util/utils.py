@@ -321,11 +321,11 @@ def k_medoid_multi_seed(X, k_min, k_max, metric="euclidean"):
 def plot_k_medoid_multi_seed(k_min, k_max, metric, kmedoids_train_sil_mean, kmedoids_train_sil_std, kmedoids_train_wcss_mean, kmedoids_train_wcss_std, x_line = 3):
 
     # increase font size
-    plt.rcParams.update({'font.size': 18})
+    plt.rcParams.update({'font.size': 20})
     fig, ax1 = plt.subplots(figsize=(10, 5))
     color = 'tab:blue'
-    ax1.set_xlabel('Number of clusters')
-    ax1.set_ylabel('Silhouette Score', color=color)
+    ax1.set_xlabel('Number of clusters', fontdict={'size': 20, 'weight': 'bold'})
+    ax1.set_ylabel('Silhouette Score', color=color, fontdict={'size': 25, 'weight': 'bold'})
     ax1.plot(range(k_min, k_max), kmedoids_train_sil_mean, marker='o', color=color)
     ax1.fill_between(range(k_min, k_max), kmedoids_train_sil_mean - kmedoids_train_sil_std, kmedoids_train_sil_mean + kmedoids_train_sil_std, alpha=0.3, color=color)
     # add vertical line for best silhouette score
@@ -336,14 +336,14 @@ def plot_k_medoid_multi_seed(k_min, k_max, metric, kmedoids_train_sil_mean, kmed
 
     ax2 = ax1.twinx()  
     color = 'tab:red'
-    ax2.set_ylabel('Inertia', color=color)  
+    ax2.set_ylabel('Inertia', color=color, fontdict={'size': 25, 'weight': 'bold'})  
     ax2.plot(range(k_min, k_max), kmedoids_train_wcss_mean, marker='o', color=color)
     ax2.fill_between(range(k_min, k_max), kmedoids_train_wcss_mean - kmedoids_train_wcss_std, kmedoids_train_wcss_mean + kmedoids_train_wcss_std, alpha=0.3, color=color)
     ax2.tick_params(axis='y', labelcolor=color)
     ax2.ticklabel_format(style="sci", axis="y", scilimits=(0, 0))
 
     fig.tight_layout()  
-    plt.title(f'KMedoids: Silhouette and Inertia vs number of clusters')
+    # plt.title(f'KMedoids: Silhouette and Inertia vs number of clusters')
     plt.grid(False)
 
     plt.savefig(f'figures/CLUSTERING/KMedoids_search_{metric}.pdf', bbox_inches='tight')
@@ -397,12 +397,12 @@ def plot_gmm_multi_seed(k_min, k_max, gmm_train_sil_mean, gmm_train_sil_std, gmm
     
 
     # increase font size
-    plt.rcParams.update({'font.size': 18})
+    plt.rcParams.update({'font.size': 20})
     fig, ax1 = plt.subplots(figsize=(10, 5))
 
     color = 'tab:blue'
-    ax1.set_xlabel('Number of clusters')
-    ax1.set_ylabel('Silhouette Score', color=color)
+    ax1.set_xlabel('Number of clusters', fontdict={'size': 20, 'weight': 'bold'})
+    ax1.set_ylabel('Silhouette Score', color=color, fontdict={'size': 20, 'weight': 'bold'})
     ax1.plot(range(k_min, k_max), gmm_train_sil_mean, marker='o', color=color)
     ax1.fill_between(range(k_min, k_max), gmm_train_sil_mean - gmm_train_sil_std, gmm_train_sil_mean + gmm_train_sil_std, alpha=0.3, color=color)
     # add vertical line for best silhouette score
@@ -412,7 +412,7 @@ def plot_gmm_multi_seed(k_min, k_max, gmm_train_sil_mean, gmm_train_sil_std, gmm
 
     ax2 = ax1.twinx()  
     color = 'tab:red'
-    ax2.set_ylabel('BIC', color=color)  
+    ax2.set_ylabel('BIC', color=color, fontdict={'size': 20, 'weight': 'bold'})  
     ax2.plot(range(k_min, k_max), gmm_train_bic_mean, marker='o', color=color)
     ax2.fill_between(range(k_min, k_max), gmm_train_bic_mean - gmm_train_bic_std, gmm_train_bic_mean + gmm_train_bic_std, alpha=0.3, color=color)
     ax2.tick_params(axis='y', labelcolor=color)
@@ -421,7 +421,7 @@ def plot_gmm_multi_seed(k_min, k_max, gmm_train_sil_mean, gmm_train_sil_std, gmm
 
 
     fig.tight_layout()
-    plt.title(f'GMM: Silhouette Score and BIC ({covariance_type} covariance)')
+    # plt.title(f'GMM: Silhouette Score and BIC ({covariance_type} covariance)')
     plt.grid(False)
     plt.savefig(f'figures/CLUSTERING/GMM_search_{covariance_type}.pdf', bbox_inches='tight')
     plt.show()
